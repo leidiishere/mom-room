@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#efe6d6">
+  <title>妈妈，有空的时候，进来坐坐</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page-bg: #e8ddcb;
+      --page-bg-deep: #ddd0bb;
+      --shell-bg: rgba(247, 241, 231, 0.92);
+      --shell-line: rgba(112, 93, 74, 0.12);
+      --ink: #544537;
+      --ink-soft: rgba(84, 69, 55, 0.72);
+      --accent: #d9b46a;
+      --paper: #fff5dc;
+      --paper-edge: #eeddb4;
+      --paper-shadow: 0 22px 42px rgba(64, 47, 31, 0.2);
+      --overlay: rgba(58, 44, 34, 0.38);
+      --night-overlay: rgba(19, 24, 42, 0.24);
+      --night-deepen: rgba(18, 22, 38, 0.18);
+      --lamp-glow: rgba(248, 213, 124, 0.3);
+      --lamp-glow-night: rgba(248, 213, 124, 0.52);
+      --door-glow: rgba(255, 213, 131, 0.2);
+      --door-glow-night: rgba(255, 213, 131, 0.38);
+      --hint-bg: rgba(255, 249, 239, 0.74);
+      --debug: rgba(219, 74, 74, 0.38);
+      --debug-line: rgba(191, 32, 32, 0.7);
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+      --shadow-soft: 0 14px 28px rgba(71, 52, 37, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100svh;
+      overflow-x: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top, rgba(255, 249, 239, 0.76), transparent 28%),
+        linear-gradient(180deg, var(--page-bg), var(--page-bg-deep));
+      transition: background 320ms ease, color 320ms ease;
+    }
+
+    body.intro-open {
+      overflow: hidden;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .phone-shell {
+      position: relative;
+      width: min(100%, 430px);
+      min-height: 100vh;
+      min-height: 100svh;
+      margin: 0 auto;
+      padding:
+        calc(12px + env(safe-area-inset-top))
+        14px
+        calc(18px + env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .page-card {
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 30px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.08)),
+        var(--shell-bg);
+      border: 1px solid var(--shell-line);
+      box-shadow: 0 24px 48px rgba(84, 62, 45, 0.16);
+      backdrop-filter: blur(8px);
+      overflow: hidden;
+      transition: background 320ms ease, box-shadow 320ms ease, border-color 320ms ease;
+    }
+
+    .page-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.26), transparent 24%),
+        radial-gradient(circle at 80% 16%, rgba(255, 233, 188, 0.22), transparent 20%);
+      pointer-events: none;
+    }
+
+    .topbar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .title-wrap {
+      min-width: 0;
+    }
+
+    .eyebrow {
+      margin: 0 0 4px;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      color: rgba(84, 69, 55, 0.52);
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: clamp(1.4rem, 4.9vw, 1.75rem);
+      line-height: 1.2;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .page-subtitle {
+      margin: 6px 0 0;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      color: var(--ink-soft);
+    }
+
+    .control-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 0 0 auto;
+      align-items: stretch;
+    }
+
+    .music-toggle,
+    .mode-toggle {
+      position: relative;
+      z-index: 3;
+      min-width: 68px;
+      min-height: 44px;
+      padding: 10px 12px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255, 248, 235, 0.92);
+      color: var(--ink);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .music-toggle.is-playing {
+      background: rgba(241, 216, 159, 0.96);
+      color: #624a31;
+    }
+
+    .music-toggle:disabled,
+    .mode-toggle:disabled {
+      opacity: 0.58;
+    }
+
+    .music-toggle:active,
+    .mode-toggle:active {
+      transform: scale(0.98);
+    }
+
+    .stage-frame {
+      position: relative;
+      z-index: 1;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .room-stage {
+      position: relative;
+      width: min(100%, calc((100svh - 180px) * 9 / 16));
+      aspect-ratio: 9 / 16;
+      border-radius: 24px;
+      overflow: hidden;
+      background-color: #e5dbc9;
+      /* room.png 路径在这里改 */
+      background-image: url("room.png");
+      background-size: cover;
+      background-position: center;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.52);
+      isolation: isolate;
+    }
+
+    .room-stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 18% 14%, rgba(255, 249, 233, 0.18), transparent 14%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 18%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .room-stage::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 54%, rgba(56, 43, 31, 0.08) 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .room-stage.is-ready .loading-cover {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .loading-cover {
+      position: absolute;
+      inset: 0;
+      z-index: 12;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background:
+        linear-gradient(180deg, rgba(247, 241, 231, 0.96), rgba(234, 226, 211, 0.9));
+      transition: opacity 320ms ease, visibility 320ms ease;
+    }
+
+    .loading-text {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 18px;
+      border-radius: 999px;
+      background: rgba(255, 252, 247, 0.84);
+      color: var(--ink);
+      box-shadow: var(--shadow-soft);
+      font-size: 0.98rem;
+      letter-spacing: 0.02em;
+    }
+
+    .loading-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(217, 180, 106, 0.92);
+      box-shadow: 14px 0 0 rgba(217, 180, 106, 0.56), -14px 0 0 rgba(217, 180, 106, 0.36);
+      animation: pulseDots 1.5s ease-in-out infinite;
+    }
+
+    /*
+      动画叠加位置集中在这里：
+      后续可按 room.png 微调 left / top / width / height
+    */
+    .night-wash,
+    .window-night,
+    .lamp-glow,
+    .door-glow {
+      position: absolute;
+      pointer-events: none;
+      z-index: 1;
+      transition: opacity 320ms ease;
+    }
+
+    .night-wash {
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(10, 17, 31, 0.08), rgba(10, 17, 31, 0.22)),
+        radial-gradient(circle at 22% 10%, rgba(58, 75, 110, 0.08), transparent 20%);
+      opacity: 0;
+    }
+
+    .window-night {
+      left: 15%;
+      top: 32%;
+      width: 26%;
+      height: 21%;
+      border-radius: 18px;
+      background: radial-gradient(circle at 50% 40%, rgba(19, 28, 46, 0.06), rgba(10, 17, 31, 0.22));
+      opacity: 0;
+      mix-blend-mode: multiply;
+    }
+
+    .lamp-glow {
+      left: 52%;
+      top: 52%;
+      width: 26%;
+      height: 18%;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--lamp-glow) 0%, rgba(248, 213, 124, 0.14) 38%, transparent 72%);
+      opacity: 0.9;
+      animation: breatheGlow 4.6s ease-in-out infinite;
+      mix-blend-mode: screen;
+    }
+
+    .door-glow {
+      left: 86%;
+      top: 33%;
+      width: 2.5%;
+      height: 39%;
+      border-radius: 999px;
+      background: linear-gradient(180deg, transparent, var(--door-glow) 18%, rgba(255, 222, 163, 0.28) 50%, transparent);
+      opacity: 0.86;
+      animation: flickerDoor 4.2s ease-in-out infinite;
+      filter: blur(1.8px);
+    }
+
+    .wall-blessing {
+      position: absolute;
+      left: 13%;
+      top: 17%;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 18px;
+      border-radius: 999px;
+      background: rgba(255, 246, 223, 0.2);
+      color: rgba(255, 250, 236, 1);
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      line-height: 1;
+      opacity: 0;
+      transform: translateY(10px) scale(0.96);
+      filter: blur(2.2px);
+      pointer-events: none;
+      transition:
+        opacity 420ms ease,
+        transform 420ms ease,
+        filter 420ms ease,
+        text-shadow 420ms ease,
+        box-shadow 420ms ease,
+        background 420ms ease;
+      text-shadow:
+        0 0 12px rgba(255, 230, 185, 0.34),
+        0 0 24px rgba(255, 214, 140, 0.24);
+      box-shadow: 0 0 0 rgba(255, 214, 140, 0);
+    }
+
+    .wall-blessing-text {
+      white-space: nowrap;
+    }
+
+    .wall-hearts {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .wall-heart {
+      position: relative;
+      width: 12px;
+      height: 12px;
+      transform: rotate(-45deg);
+      border-radius: 2px;
+      background: linear-gradient(180deg, rgba(255, 221, 164, 0.98), rgba(242, 173, 129, 0.92));
+      box-shadow: 0 0 12px rgba(255, 202, 137, 0.24);
+    }
+
+    .wall-heart::before,
+    .wall-heart::after {
+      content: "";
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: inherit;
+    }
+
+    .wall-heart::before {
+      top: -6px;
+      left: 0;
+    }
+
+    .wall-heart::after {
+      top: 0;
+      left: 6px;
+    }
+
+    .wall-heart.is-small {
+      width: 9px;
+      height: 9px;
+      opacity: 0.88;
+    }
+
+    .wall-heart.is-small::before,
+    .wall-heart.is-small::after {
+      width: 9px;
+      height: 9px;
+    }
+
+    .wall-heart.is-small::before {
+      top: -4.5px;
+    }
+
+    .wall-heart.is-small::after {
+      left: 4.5px;
+    }
+
+    .floating-cloud {
+      position: absolute;
+      left: 28%;
+      top: 35%;
+      width: 13%;
+      height: 5%;
+      z-index: 2;
+      pointer-events: none;
+      animation: driftCloud 14s linear infinite;
+    }
+
+    .floating-cloud::before,
+    .floating-cloud::after,
+    .floating-cloud span {
+      content: "";
+      position: absolute;
+      display: block;
+      background: rgba(255, 255, 255, 0.82);
+      border-radius: 999px;
+      box-shadow: 0 4px 14px rgba(255, 255, 255, 0.18);
+    }
+
+    .floating-cloud::before {
+      inset: 34% 0 12% 16%;
+    }
+
+    .floating-cloud::after {
+      left: 8%;
+      top: 28%;
+      width: 40%;
+      height: 42%;
+    }
+
+    .floating-cloud span {
+      right: 10%;
+      top: 18%;
+      width: 44%;
+      height: 54%;
+    }
+
+    .steam-group {
+      position: absolute;
+      left: 35%;
+      top: 57%;
+      width: 9%;
+      height: 10%;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .steam {
+      position: absolute;
+      bottom: 0;
+      width: 16%;
+      height: 70%;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.72));
+      filter: blur(1px);
+      opacity: 0;
+      animation: steamRise 3.8s ease-in-out infinite;
+    }
+
+    .steam.s1 {
+      left: 12%;
+      animation-delay: 0s;
+    }
+
+    .steam.s2 {
+      left: 44%;
+      animation-delay: 1.2s;
+    }
+
+    .steam.s3 {
+      left: 72%;
+      animation-delay: 2s;
+    }
+
+    .hotspot-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+    }
+
+    .hotspot {
+      position: absolute;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: transparent;
+      cursor: pointer;
+      overflow: visible;
+    }
+
+    .hotspot:focus-visible {
+      outline: 2px solid rgba(255, 250, 242, 0.92);
+      outline-offset: 3px;
+      border-radius: 14px;
+    }
+
+    .hotspot::before,
+    .hotspot::after {
+      content: "";
+      position: absolute;
+      inset: 50% auto auto 50%;
+      transform: translate(-50%, -50%);
+      border-radius: 999px;
+      pointer-events: none;
+      transition: opacity 200ms ease, transform 200ms ease;
+    }
+
+    .hotspot::before {
+      width: clamp(12px, 20%, 18px);
+      height: clamp(12px, 20%, 18px);
+      background: rgba(255, 245, 223, 0.78);
+      box-shadow:
+        0 0 0 6px rgba(255, 245, 223, 0.1),
+        0 0 14px rgba(255, 233, 188, 0.42);
+      opacity: 0.85;
+      animation: hotspotGlow 3.4s ease-in-out infinite;
+    }
+
+    .hotspot::after {
+      width: clamp(30px, 60%, 50px);
+      height: clamp(30px, 60%, 50px);
+      border: 1px solid rgba(255, 246, 226, 0.42);
+      opacity: 0.7;
+      animation: hotspotRing 3.4s ease-out infinite;
+    }
+
+    .hotspot:active::before,
+    .hotspot:active::after {
+      transform: translate(-50%, -50%) scale(0.94);
+    }
+
+    .hotspot-name {
+      display: none;
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(191, 32, 32, 0.86);
+      color: #fff;
+      font-size: 11px;
+      line-height: 1.3;
+      letter-spacing: 0.02em;
+      pointer-events: none;
+    }
+
+    body.debug-hotspots .hotspot {
+      border: 1.5px dashed var(--debug-line);
+      background: var(--debug);
+      border-radius: 14px;
+    }
+
+    body.debug-hotspots .hotspot-name {
+      display: inline-flex;
+    }
+
+    .footer-bar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 2px 4px 0;
+      color: var(--ink-soft);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .footer-hint,
+    .footer-count {
+      margin: 0;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: var(--hint-bg);
+      box-shadow: 0 8px 18px rgba(86, 66, 46, 0.08);
+      backdrop-filter: blur(6px);
+    }
+
+    .footer-hint {
+      flex: 1 1 auto;
+      transition: opacity 900ms ease;
+    }
+
+    .footer-hint.is-soft {
+      opacity: 0.52;
+    }
+
+    .footer-count {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    .modal-root {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding:
+        calc(20px + env(safe-area-inset-top))
+        18px
+        calc(20px + env(safe-area-inset-bottom));
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 260ms ease;
+    }
+
+    .intro-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding:
+        calc(20px + env(safe-area-inset-top))
+        18px
+        calc(20px + env(safe-area-inset-bottom));
+      background:
+        linear-gradient(180deg, rgba(124, 89, 58, 0.14), rgba(84, 62, 45, 0.28)),
+        rgba(92, 69, 51, 0.2);
+      backdrop-filter: blur(6px);
+      transition: opacity 280ms ease, visibility 280ms ease;
+    }
+
+    .intro-modal.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .intro-card {
+      position: relative;
+      width: min(100%, 360px);
+      padding: 24px 22px 22px;
+      border-radius: 28px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 14%),
+        linear-gradient(180deg, rgba(255, 248, 236, 0.98), rgba(255, 243, 224, 0.94));
+      border: 1px solid rgba(227, 201, 156, 0.92);
+      box-shadow: 0 24px 52px rgba(86, 60, 38, 0.22);
+      overflow: hidden;
+    }
+
+    .intro-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 14% 12%, rgba(255, 255, 255, 0.46), transparent 18%),
+        linear-gradient(135deg, rgba(245, 214, 149, 0.2), transparent 28%);
+      pointer-events: none;
+    }
+
+    .intro-kicker {
+      position: relative;
+      margin: 0 0 8px;
+      color: rgba(115, 89, 61, 0.68);
+      font-size: 0.82rem;
+      letter-spacing: 0.12em;
+    }
+
+    .intro-title {
+      position: relative;
+      margin: 0 0 14px;
+      font-size: 1.45rem;
+      line-height: 1.35;
+      color: #5a4534;
+    }
+
+    .intro-body {
+      position: relative;
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.9;
+      color: #66513f;
+      white-space: pre-line;
+    }
+
+    .intro-action {
+      position: relative;
+      width: 100%;
+      min-height: 50px;
+      margin-top: 18px;
+      border: 0;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #f3d692, #e8bf73);
+      color: #5b432f;
+      font-size: 1rem;
+      font-weight: 600;
+      box-shadow: 0 12px 24px rgba(184, 142, 75, 0.24);
+    }
+
+    .intro-action:active {
+      transform: scale(0.985);
+    }
+
+    .modal-root.is-open {
+      pointer-events: auto;
+      opacity: 1;
+    }
+
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(47, 38, 32, 0.26), var(--overlay)),
+        rgba(47, 38, 32, 0.24);
+      backdrop-filter: blur(4px);
+      opacity: 0;
+      transition: opacity 260ms ease;
+    }
+
+    .modal-root.is-open .modal-backdrop {
+      opacity: 1;
+    }
+
+    .note-card {
+      position: relative;
+      width: min(100%, 340px);
+      max-height: min(78vh, 560px);
+      overflow: auto;
+      padding: 20px 20px 22px;
+      border-radius: 24px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.24), transparent 12%),
+        repeating-linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.16) 0,
+          rgba(255, 255, 255, 0.16) 2px,
+          transparent 2px,
+          transparent 12px
+        ),
+        var(--paper);
+      border: 1px solid rgba(222, 204, 161, 0.92);
+      box-shadow: var(--paper-shadow);
+      transform: translateY(18px) scale(0.98);
+      opacity: 0;
+      transition: transform 320ms var(--ease), opacity 320ms var(--ease);
+      scrollbar-width: thin;
+    }
+
+    .note-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background:
+        radial-gradient(circle at 14% 12%, rgba(255, 255, 255, 0.44), transparent 18%),
+        linear-gradient(180deg, rgba(238, 221, 180, 0.14), transparent 26%);
+      pointer-events: none;
+    }
+
+    .modal-root.is-open .note-card {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    .note-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 2;
+      width: 44px;
+      height: 44px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(255, 249, 239, 0.82);
+      color: rgba(84, 69, 55, 0.86);
+      font-size: 1.35rem;
+      line-height: 1;
+      box-shadow: 0 8px 16px rgba(91, 70, 50, 0.1);
+    }
+
+    .note-tag {
+      display: inline-block;
+      margin: 0 0 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(237, 221, 181, 0.62);
+      color: rgba(84, 69, 55, 0.74);
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+    }
+
+    .note-special {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin: -2px 44px 12px 0;
+      color: #8c6a48;
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    .note-special::before {
+      content: "";
+      width: 16px;
+      height: 16px;
+      flex: 0 0 16px;
+      border-radius: 16px 0 16px 0;
+      background:
+        radial-gradient(circle at 35% 35%, rgba(255, 246, 223, 0.92) 0 28%, transparent 29%),
+        linear-gradient(135deg, #efcf86, #d9ad65);
+      box-shadow: 0 3px 8px rgba(153, 112, 61, 0.18);
+      transform: rotate(-18deg);
+    }
+
+    .note-title {
+      margin: 0 44px 12px 0;
+      font-size: 1.32rem;
+      line-height: 1.35;
+      color: #4d4033;
+    }
+
+    .note-body {
+      margin: 0;
+      font-size: 1.125rem;
+      line-height: 1.85;
+      color: #5a4c3d;
+      white-space: pre-line;
+      word-break: break-word;
+    }
+
+    .note-card.is-final {
+      background:
+        linear-gradient(180deg, rgba(255, 249, 236, 0.82), rgba(255, 241, 214, 0.94)),
+        repeating-linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.14) 0,
+          rgba(255, 255, 255, 0.14) 2px,
+          transparent 2px,
+          transparent 12px
+        ),
+        #fff3d6;
+      border-color: rgba(216, 174, 101, 0.72);
+      box-shadow: 0 28px 50px rgba(117, 82, 44, 0.24);
+    }
+
+    .note-card.is-final::after {
+      content: "";
+      position: absolute;
+      top: 14px;
+      left: 22px;
+      width: 76px;
+      height: 18px;
+      border-radius: 5px;
+      background: linear-gradient(180deg, rgba(244, 213, 146, 0.92), rgba(238, 198, 122, 0.68));
+      opacity: 0.9;
+      transform: rotate(-6deg);
+      box-shadow: 0 4px 10px rgba(151, 115, 62, 0.16);
+      pointer-events: none;
+    }
+
+    .note-card.is-final .note-tag {
+      background: rgba(244, 213, 146, 0.72);
+      color: #7d5d3c;
+    }
+
+    .note-card.is-final .note-special {
+      display: inline-flex;
+    }
+
+    .note-card.is-final .note-title {
+      color: #6f4f30;
+    }
+
+    .note-card.is-final .note-body {
+      color: #654d37;
+    }
+
+    body.night-mode .mode-toggle {
+      background: rgba(45, 51, 70, 0.84);
+      color: rgba(255, 244, 225, 0.92);
+    }
+
+    body.night-mode .music-toggle {
+      background: rgba(45, 51, 70, 0.84);
+      color: rgba(255, 244, 225, 0.92);
+    }
+
+    body.night-mode .music-toggle.is-playing {
+      background: rgba(154, 120, 71, 0.92);
+      color: rgba(255, 247, 231, 0.96);
+    }
+
+    body.night-mode {
+      color: rgba(255, 244, 225, 0.94);
+      background:
+        radial-gradient(circle at top, rgba(69, 78, 108, 0.34), transparent 28%),
+        linear-gradient(180deg, #67674c, #484b63);
+    }
+
+    body.night-mode .page-card {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+        rgba(48, 50, 61, 0.72);
+      border-color: rgba(255, 244, 225, 0.08);
+      box-shadow: 0 24px 48px rgba(18, 18, 28, 0.28);
+    }
+
+    body.night-mode .page-subtitle,
+    body.night-mode .eyebrow,
+    body.night-mode .footer-bar {
+      color: rgba(255, 244, 225, 0.72);
+    }
+
+    body.night-mode .footer-hint,
+    body.night-mode .footer-count {
+      background: rgba(41, 45, 58, 0.5);
+      color: rgba(255, 244, 225, 0.82);
+    }
+
+    body.night-mode .night-wash,
+    body.night-mode .window-night {
+      opacity: 1;
+    }
+
+    body.night-mode .wall-blessing {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+      background: rgba(255, 246, 223, 0.28);
+      text-shadow:
+        0 0 12px rgba(255, 247, 224, 0.98),
+        0 0 22px rgba(255, 230, 184, 0.82),
+        0 0 38px rgba(255, 205, 140, 0.54),
+        0 0 54px rgba(255, 205, 140, 0.24);
+      box-shadow:
+        0 0 18px rgba(255, 225, 168, 0.2),
+        inset 0 0 0 1px rgba(255, 244, 218, 0.16);
+      animation: blessingGlow 4.8s ease-in-out infinite;
+    }
+
+    body.night-mode .room-stage::before {
+      background:
+        radial-gradient(circle at 18% 14%, rgba(237, 229, 201, 0.06), transparent 14%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 18%);
+    }
+
+    body.night-mode .room-stage::after {
+      background:
+        linear-gradient(180deg, rgba(10, 17, 31, 0.08), transparent 34%),
+        linear-gradient(180deg, transparent 52%, rgba(15, 18, 31, 0.22) 100%);
+    }
+
+    body.night-mode .lamp-glow {
+      background: radial-gradient(circle, var(--lamp-glow-night) 0%, rgba(248, 213, 124, 0.2) 40%, transparent 74%);
+      opacity: 1;
+    }
+
+    body.night-mode .door-glow {
+      background: linear-gradient(180deg, transparent, var(--door-glow-night) 18%, rgba(255, 222, 163, 0.46) 50%, transparent);
+      opacity: 1;
+    }
+
+    body.night-mode .hotspot::before {
+      background: rgba(255, 233, 188, 0.82);
+      box-shadow:
+        0 0 0 7px rgba(255, 233, 188, 0.08),
+        0 0 18px rgba(255, 227, 163, 0.48);
+    }
+
+    /* ==============================
+       热点位置集中在这里，后续微调百分比时改这一段
+       ============================== */
+    .hotspot[data-key="window"] {
+      left: 11%;
+      top: 29%;
+      width: 36%;
+      height: 27%;
+    }
+
+    .hotspot[data-key="calendar"] {
+      left: 57%;
+      top: 38%;
+      width: 17%;
+      height: 13%;
+    }
+
+    .hotspot[data-key="envelope"] {
+      left: 52%;
+      top: 64%;
+      width: 14%;
+      height: 8%;
+      z-index: 3;
+    }
+
+    .hotspot[data-key="lamp"] {
+      left: 58%;
+      top: 53%;
+      width: 16%;
+      height: 11%;
+    }
+
+    .hotspot[data-key="cup"] {
+      left: 33%;
+      top: 61%;
+      width: 15%;
+      height: 10%;
+    }
+
+    .hotspot[data-key="plant"] {
+      left: 0%;
+      top: 60%;
+      width: 19%;
+      height: 23%;
+    }
+
+    .hotspot[data-key="drawer"] {
+      left: 84%;
+      top: 75%;
+      width: 16%;
+      height: 22%;
+    }
+
+    .hotspot[data-key="door"] {
+      left: 81%;
+      top: 30%;
+      width: 19%;
+      height: 48%;
+    }
+
+    @media (max-width: 374px) {
+      .phone-shell {
+        padding-inline: 10px;
+      }
+
+      .page-card {
+        padding: 12px;
+      }
+
+      .footer-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .footer-count,
+      .footer-hint {
+        text-align: center;
+      }
+
+      .note-card {
+        padding-inline: 18px;
+      }
+    }
+
+    @media (min-width: 431px) {
+      body {
+        padding-inline: 20px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+
+      .floating-cloud,
+      .steam,
+      .lamp-glow,
+      .door-glow,
+      .hotspot::before,
+      .hotspot::after,
+      .loading-dot {
+        animation: none !important;
+      }
+    }
+
+    @keyframes driftCloud {
+      0% {
+        transform: translateX(0);
+      }
+      50% {
+        transform: translateX(10%);
+      }
+      100% {
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes steamRise {
+      0% {
+        transform: translate3d(0, 12%, 0) scaleY(0.88);
+        opacity: 0;
+      }
+      18% {
+        opacity: 0.38;
+      }
+      52% {
+        transform: translate3d(-12%, -26%, 0) scaleY(1);
+        opacity: 0.32;
+      }
+      100% {
+        transform: translate3d(10%, -58%, 0) scaleY(1.08);
+        opacity: 0;
+      }
+    }
+
+    @keyframes breatheGlow {
+      0%,
+      100% {
+        transform: scale(0.97);
+        opacity: 0.8;
+      }
+      50% {
+        transform: scale(1.04);
+        opacity: 1;
+      }
+    }
+
+    @keyframes flickerDoor {
+      0%,
+      100% {
+        opacity: 0.72;
+      }
+      35% {
+        opacity: 0.9;
+      }
+      62% {
+        opacity: 0.78;
+      }
+    }
+
+    @keyframes blessingGlow {
+      0%,
+      100% {
+        opacity: 0.82;
+      }
+      50% {
+        opacity: 1;
+      }
+    }
+
+    @keyframes hotspotGlow {
+      0%,
+      100% {
+        opacity: 0.7;
+        transform: translate(-50%, -50%) scale(0.95);
+      }
+      50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.08);
+      }
+    }
+
+    @keyframes hotspotRing {
+      0% {
+        opacity: 0.68;
+        transform: translate(-50%, -50%) scale(0.82);
+      }
+      70% {
+        opacity: 0.08;
+        transform: translate(-50%, -50%) scale(1.14);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.22);
+      }
+    }
+
+    @keyframes pulseDots {
+      0%,
+      100% {
+        opacity: 0.52;
+        transform: scale(0.92);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.06);
+      }
+    }
+  </style>
+</head>
+<body class="intro-open">
+  <div class="intro-modal" id="introModal" aria-hidden="false">
+    <section class="intro-card" role="dialog" aria-modal="true" aria-labelledby="introTitle" aria-describedby="introBody">
+      <p class="intro-kicker">FOR MOM</p>
+      <h2 class="intro-title" id="introTitle">妈妈，母亲节快乐</h2>
+      <p class="intro-body" id="introBody">我做了一个小房间，里面藏着几句话。
+你可以点一点房间里的东西，
+窗户、茶杯、台灯、日历、植物、抽屉、门和信封里，
+都有一点想对你说的话。
+
+不用着急，慢慢看就好。</p>
+      <button class="intro-action" id="introAction" type="button">我知道啦</button>
+    </section>
+  </div>
+
+  <div class="phone-shell">
+    <main class="page-card" aria-label="妈妈，有空的时候，进来坐坐">
+      <header class="topbar">
+        <div class="title-wrap">
+          <p class="eyebrow">ROOM NOTE</p>
+          <h1 class="page-title">妈妈，有空的时候，进来坐坐</h1>
+          <p class="page-subtitle">一间安静的小房间，点一点里面的东西，里面藏着几句话。</p>
+        </div>
+        <div class="control-stack">
+          <button class="music-toggle" id="musicToggle" type="button" aria-pressed="false">静音</button>
+          <button class="mode-toggle" id="modeToggle" type="button" aria-pressed="false">关灯</button>
+        </div>
+      </header>
+
+      <section class="stage-frame">
+        <div class="room-stage" id="roomStage" aria-label="互动房间场景">
+          <div class="loading-cover" id="loadingCover" aria-live="polite">
+            <div class="loading-text">
+              <span class="loading-dot" aria-hidden="true"></span>
+              <span>房间准备中……</span>
+            </div>
+          </div>
+
+          <div class="night-wash" aria-hidden="true"></div>
+          <div class="window-night" aria-hidden="true"></div>
+
+          <div class="floating-cloud" aria-hidden="true"><span></span></div>
+          <div class="steam-group" aria-hidden="true">
+            <span class="steam s1"></span>
+            <span class="steam s2"></span>
+            <span class="steam s3"></span>
+          </div>
+          <div class="lamp-glow" aria-hidden="true"></div>
+          <div class="door-glow" aria-hidden="true"></div>
+          <div class="wall-blessing" aria-hidden="true">
+            <span class="wall-blessing-text">母亲节快乐</span>
+            <span class="wall-hearts" aria-hidden="true">
+              <span class="wall-heart"></span>
+              <span class="wall-heart is-small"></span>
+            </span>
+          </div>
+
+          <div class="hotspot-layer" aria-label="房间里的可点击物件">
+            <button class="hotspot" type="button" data-key="window" aria-label="窗边">
+              <span class="hotspot-name">window</span>
+            </button>
+            <button class="hotspot" type="button" data-key="calendar" aria-label="日历">
+              <span class="hotspot-name">calendar</span>
+            </button>
+            <button class="hotspot" type="button" data-key="envelope" aria-label="信封">
+              <span class="hotspot-name">envelope</span>
+            </button>
+            <button class="hotspot" type="button" data-key="lamp" aria-label="台灯">
+              <span class="hotspot-name">lamp</span>
+            </button>
+            <button class="hotspot" type="button" data-key="cup" aria-label="茶杯">
+              <span class="hotspot-name">cup</span>
+            </button>
+            <button class="hotspot" type="button" data-key="plant" aria-label="绿植">
+              <span class="hotspot-name">plant</span>
+            </button>
+            <button class="hotspot" type="button" data-key="drawer" aria-label="抽屉">
+              <span class="hotspot-name">drawer</span>
+            </button>
+            <button class="hotspot" type="button" data-key="door" aria-label="门口">
+              <span class="hotspot-name">door</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer-bar">
+        <p class="footer-hint" id="footerHint">点一点房间里的东西，里面藏着几句话。</p>
+        <p class="footer-count" id="footerCount" aria-live="polite">已找到 0 / 8 张小纸条</p>
+      </footer>
+    </main>
+  </div>
+
+  <div class="modal-root" id="modalRoot" aria-hidden="true">
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <section class="note-card" id="noteCard" role="dialog" aria-modal="true" aria-labelledby="noteTitle" aria-describedby="noteBody">
+      <button class="note-close" id="modalClose" type="button" aria-label="关闭纸条">×</button>
+      <p class="note-tag">ROOM NOTE</p>
+      <p class="note-special" id="noteSpecial">最后一张，留给你慢慢看。</p>
+      <h2 class="note-title" id="noteTitle"></h2>
+      <p class="note-body" id="noteBody"></p>
+    </section>
+  </div>
+
+  <audio id="bgmPlayer" src="bgm.mp3" preload="metadata" loop></audio>
+
+  <script>
+    /*
+      调试开关：
+      true  = 显示热点半透明红框和名称
+      false = 隐藏边框与名称，只保留轻微提示光圈
+    */
+    const debugHotspots = false;
+
+    /*
+      文案集中在这里：
+      后续要改标题、正文、隐藏纸条、全部收集完成纸条，都改这个对象即可。
+    */
+    const notes = {
+      window: {
+        title: "窗边",
+        body: "天气好的时候，可以出去走走。\n今天的风，也想替我抱抱你。"
+      },
+      cup: {
+        title: "茶杯",
+        body: "茶凉了可以再热。\n你忙了这么久，也该慢慢歇一歇。\n母亲节快乐。"
+      },
+      lamp: {
+        title: "台灯",
+        body: "晚上别太晚睡。\n很多事，明天再想也来得及。\n今天先把灯留给自己。"
+      },
+      calendar: {
+        title: "日历",
+        body: "日子被你安排得很妥帖。\n家里的许多平常，\n都是你悄悄放好的温柔。"
+      },
+      drawer: {
+        title: "抽屉",
+        body: "抽屉里放了一张小小的兑换券：\n母亲节限定，\n有空一起散步一次，时间你定。"
+      },
+      plant: {
+        title: "绿植",
+        body: "有些爱不是一下子开花，\n是每天一点点照顾、陪伴和生长。\n就像你一直做的那样。"
+      },
+      door: {
+        title: "门口",
+        body: "有些牵挂，不用常常说出口。\n一想到你在，\n心里就会觉得很踏实。"
+      },
+      envelope: {
+        title: "今日小纸条",
+        body: ""
+      },
+      hiddenDoor: {
+        title: "门后",
+        body: "还有一句放在门后面：\n妈妈，你辛苦了。\n谢谢你一直把家照顾得这么暖。"
+      },
+      allFound: {
+        title: "都看完啦",
+        body: "也没什么特别正式的话，\n只是想让你有空的时候，\n多给自己留一点空。"
+      }
+    };
+
+    /*
+      随机信封文案集中在这里：
+      点击信封时会随机抽一句。
+    */
+    const envelopeMessages = [
+      "妈妈，今天也可以慢一点。",
+      "有些事不用马上做好，先歇一歇。",
+      "天气好的话，我们一起出去走走。",
+      "别忘了多喝水，也别总忘了自己。",
+      "母亲节快乐，今天你最大。"
+    ];
+
+    /*
+      计数只统计这 8 个物件。
+      隐藏纸条 hiddenDoor 不计入这里。
+    */
+    const trackableKeys = [
+      "window",
+      "cup",
+      "lamp",
+      "calendar",
+      "drawer",
+      "plant",
+      "door",
+      "envelope"
+    ];
+
+    const state = {
+      found: new Set(),
+      allFoundShown: false,
+      isNight: false,
+      doorClicks: [],
+      activeModalKey: null,
+      queuedFinalNote: false,
+      doorOpenTimer: null
+    };
+
+    const roomStage = document.getElementById("roomStage");
+    const loadingCover = document.getElementById("loadingCover");
+    const introModal = document.getElementById("introModal");
+    const introAction = document.getElementById("introAction");
+    const bgmPlayer = document.getElementById("bgmPlayer");
+    const musicToggle = document.getElementById("musicToggle");
+    const modeToggle = document.getElementById("modeToggle");
+    const footerHint = document.getElementById("footerHint");
+    const footerCount = document.getElementById("footerCount");
+    const modalRoot = document.getElementById("modalRoot");
+    const modalBackdrop = document.getElementById("modalBackdrop");
+    const modalClose = document.getElementById("modalClose");
+    const noteCard = document.getElementById("noteCard");
+    const noteTitle = document.getElementById("noteTitle");
+    const noteBody = document.getElementById("noteBody");
+    const hotspots = Array.from(document.querySelectorAll(".hotspot"));
+
+    if (debugHotspots) {
+      document.body.classList.add("debug-hotspots");
+    }
+
+    function preloadRoomImage() {
+      const image = new Image();
+      /* room.png 路径如果要改，这里也一起改 */
+      image.src = "room.png";
+
+      const markReady = () => {
+        roomStage.classList.add("is-ready");
+      };
+
+      if (image.complete) {
+        markReady();
+        return;
+      }
+
+      image.addEventListener("load", markReady, { once: true });
+      image.addEventListener("error", () => {
+        const loadingText = loadingCover.querySelector(".loading-text span:last-child");
+        if (loadingText) {
+          loadingText.textContent = "room.png 没有加载成功，请检查图片是否放在同级目录。";
+        }
+      }, { once: true });
+    }
+
+    function pickEnvelopeMessage() {
+      const randomIndex = Math.floor(Math.random() * envelopeMessages.length);
+      return envelopeMessages[randomIndex];
+    }
+
+    function updateFoundCount() {
+      footerCount.textContent = "已找到 " + state.found.size + " / 8 张小纸条";
+    }
+
+    function markFound(key, options = {}) {
+      const { deferFinalNote = false } = options;
+
+      if (!trackableKeys.includes(key)) {
+        return;
+      }
+
+      const wasNew = !state.found.has(key);
+      if (!wasNew) {
+        return;
+      }
+
+      state.found.add(key);
+      updateFoundCount();
+
+      if (state.found.size === trackableKeys.length && !state.allFoundShown) {
+        state.allFoundShown = true;
+        state.queuedFinalNote = true;
+      }
+    }
+
+    function openNote(title, body, key) {
+      state.activeModalKey = key || null;
+      noteTitle.textContent = title;
+      noteBody.textContent = body;
+      noteCard.classList.toggle("is-final", key === "allFound");
+      modalRoot.classList.add("is-open");
+      modalRoot.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeNote() {
+      state.activeModalKey = null;
+      modalRoot.classList.remove("is-open");
+      modalRoot.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+      noteCard.classList.remove("is-final");
+
+      if (state.queuedFinalNote) {
+        state.queuedFinalNote = false;
+        window.setTimeout(() => {
+          openNote(notes.allFound.title, notes.allFound.body, "allFound");
+        }, 220);
+      }
+    }
+
+    function handleDoorSequence() {
+      const now = Date.now();
+      state.doorClicks = state.doorClicks.filter((timestamp) => now - timestamp <= 2000);
+      state.doorClicks.push(now);
+
+      if (!state.found.has("door")) {
+        markFound("door", { deferFinalNote: true });
+      }
+
+      if (state.doorOpenTimer) {
+        window.clearTimeout(state.doorOpenTimer);
+        state.doorOpenTimer = null;
+      }
+
+      if (state.doorClicks.length >= 3) {
+        state.doorClicks = [];
+        if (state.doorOpenTimer) {
+          window.clearTimeout(state.doorOpenTimer);
+          state.doorOpenTimer = null;
+        }
+        openNote(notes.hiddenDoor.title, notes.hiddenDoor.body, "hiddenDoor");
+        return true;
+      }
+
+      state.doorOpenTimer = window.setTimeout(() => {
+        state.doorClicks = [];
+        state.doorOpenTimer = null;
+        openNote(notes.door.title, notes.door.body, "door");
+      }, 520);
+
+      return false;
+    }
+
+    function handleHotspotClick(key) {
+      if (key !== "door" && state.doorOpenTimer) {
+        window.clearTimeout(state.doorOpenTimer);
+        state.doorOpenTimer = null;
+        state.doorClicks = [];
+      }
+
+      if (key === "door") {
+        const hiddenTriggered = handleDoorSequence();
+        if (hiddenTriggered) {
+          return;
+        }
+        return;
+      }
+
+      markFound(key);
+
+      if (key === "envelope") {
+        openNote(notes.envelope.title, pickEnvelopeMessage(), key);
+        return;
+      }
+
+      const note = notes[key];
+      if (note) {
+        openNote(note.title, note.body, key);
+      }
+    }
+
+    function toggleNightMode() {
+      state.isNight = !state.isNight;
+      document.body.classList.toggle("night-mode", state.isNight);
+      modeToggle.textContent = state.isNight ? "开灯" : "关灯";
+      modeToggle.setAttribute("aria-pressed", String(state.isNight));
+    }
+
+    function updateMusicButton() {
+      const isPlaying = !bgmPlayer.paused;
+      musicToggle.textContent = isPlaying ? "♪" : "静音";
+      musicToggle.classList.toggle("is-playing", isPlaying);
+      musicToggle.setAttribute("aria-pressed", String(isPlaying));
+    }
+
+    async function tryPlayMusic() {
+      try {
+        bgmPlayer.volume = 0.35;
+        await bgmPlayer.play();
+      } catch (error) {
+        return false;
+      }
+
+      return true;
+    }
+
+    async function toggleMusic() {
+      if (bgmPlayer.paused) {
+        await tryPlayMusic();
+      } else {
+        bgmPlayer.pause();
+      }
+
+      updateMusicButton();
+    }
+
+    async function dismissIntroAndPlayMusic() {
+      introModal.classList.add("is-hidden");
+      introModal.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("intro-open");
+      await tryPlayMusic();
+      updateMusicButton();
+    }
+
+    function softenHintLater() {
+      window.setTimeout(() => {
+        footerHint.classList.add("is-soft");
+      }, 3200);
+    }
+
+    hotspots.forEach((button) => {
+      button.addEventListener("click", () => {
+        const key = button.dataset.key;
+        handleHotspotClick(key);
+      });
+    });
+
+    introAction.addEventListener("click", dismissIntroAndPlayMusic);
+    musicToggle.addEventListener("click", toggleMusic);
+    modeToggle.addEventListener("click", toggleNightMode);
+    modalClose.addEventListener("click", closeNote);
+    modalBackdrop.addEventListener("click", closeNote);
+    bgmPlayer.addEventListener("play", updateMusicButton);
+    bgmPlayer.addEventListener("pause", updateMusicButton);
+    bgmPlayer.addEventListener("error", () => {
+      updateMusicButton();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && modalRoot.classList.contains("is-open")) {
+        closeNote();
+      }
+    });
+
+    preloadRoomImage();
+    updateFoundCount();
+    updateMusicButton();
+    softenHintLater();
+  </script>
+</body>
+</html>
